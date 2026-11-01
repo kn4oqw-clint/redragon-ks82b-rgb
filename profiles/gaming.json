@@ -5,6 +5,6 @@
   "keys": {
     "W": "red", "A": "red", "S": "red", "D": "red",
     "Space": "cyan",
-    "Shift": "orange", "Ctrl": "orange"
+    "LShift": "orange", "LCtrl": "orange"
   }
 }

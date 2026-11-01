@@ -183,11 +183,17 @@ class AudioCapture:
 
     def close(self):
         self._stop.set()
-        if self._proc:
+        proc = self._proc
+        if proc:
             try:
-                self._proc.terminate()
+                proc.terminate()
+                proc.wait(timeout=2)
             except Exception:
-                pass
+                try:
+                    proc.kill()
+                    proc.wait(timeout=2)
+                except Exception:
+                    pass
 
 
 @register

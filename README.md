@@ -11,13 +11,21 @@ the same thing the board does in normal operation. It **never** issues firmware
 don't use OpenRGB's Sinowealth driver, which was disabled over bricking reports
 tied to its firmware-flash path.)
 
-No Python dependencies and no build step — pure standard library, runs on
-`python3` directly.
+The CLI, daemon and compositor need nothing beyond the Python standard library.
+Optional features pull in extra packages:
+
+| Feature | Needs |
+| --- | --- |
+| `spectrum` / `aurora` frequency bands | `numpy` |
+| System tray GUI | `PyQt5` |
+| Home Assistant / MQTT | `paho-mqtt` |
+| VU / audio-reactive modes | `parec` (PipeWire or PulseAudio) |
+| Notification pulses | `dbus-monitor` |
 
 ## Setup
 
 ```bash
-git clone https://github.com/chancellor1101/redragon-ks82b-rgb.git
+git clone https://github.com/kn4oqw-clint/redragon-ks82b-rgb.git
 cd redragon-ks82b-rgb
 
 # one-time: allow non-root access to the keyboard's hidraw node
@@ -91,7 +99,7 @@ pause the daemon so they can drive the device directly.
 ```
 ks82d daemon ──owns──▶ /dev/hidraw1        control socket (JSON over UNIX)
   Compositor: base source + overlays          ▲            ▲
-  Sources (plugins): effects + utility    ks82rgb CLI   PyQt5 tray (planned)
+  Sources (plugins): effects + utility    ks82rgb CLI   PyQt5 tray
 ```
 
 **Modes are plugins.** Built-ins: `wave`, `breathing`, `rainbow`, `solid`,
@@ -169,7 +177,9 @@ State is republished on every change (from HA, the CLI, or the tray) so entities
 stay in sync.
 
 ```bash
-pip install --user --break-system-packages paho-mqtt   # if not already present
+# install paho-mqtt with your distro's package manager, e.g.
+#   Arch:   sudo pacman -S python-paho-mqtt
+#   Debian: sudo apt install python3-paho-mqtt
 ks82rgb mqtt setup            # writes ~/.config/ks82rgb/mqtt.json (chmod 600)
 # edit that file: host, port, username, password
 ks82rgb mqtt on               # connect + publish discovery (persists across restarts)

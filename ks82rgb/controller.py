@@ -68,14 +68,29 @@ def _find_node():
             continue
         if _HID_ID_TOKEN not in uevent:
             continue
-        matches.append(sysfs)
-        if _interface_number(sysfs) == CONTROL_INTERFACE:
-            return "/dev/" + os.path.basename(sysfs)
+        node = "/dev/" + os.path.basename(sysfs)
+        iface = _interface_number(sysfs)
+        if iface == CONTROL_INTERFACE:
+            return node
+        matches.append((node, iface))
+
     if not matches:
         raise DeviceError(
             f"No keyboard found at {VENDOR_ID:04x}:{PRODUCT_ID:04x}. Plugged in?")
-    # Fallback: only one hidraw for it -> use that.
-    return "/dev/" + os.path.basename(matches[-1])
+
+    # Some sysfs setups don't expose bInterfaceNumber.  With exactly one node
+    # there is nothing to choose between, so keep using it.
+    if len(matches) == 1 and matches[0][1] is None:
+        return matches[0][0]
+
+    # Otherwise don't guess: report 0x08 is only meaningful on IF1, and writing
+    # it to the boot interface (IF0) is at best a silent no-op.
+    found = ", ".join(f"{n} (interface {i or '?'})" for n, i in matches)
+    raise DeviceError(
+        f"Found {len(matches)} hidraw node(s) for "
+        f"{VENDOR_ID:04x}:{PRODUCT_ID:04x}, none on control interface "
+        f"{CONTROL_INTERFACE}: {found}. Refusing to guess which one drives "
+        "the LEDs.")
 
 
 def build_packet(slot_colors):

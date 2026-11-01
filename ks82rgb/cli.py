@@ -138,8 +138,13 @@ def cmd_effect(args):
 
 # ------------------------------------------------------------- profiles -------
 def cmd_save(args):
+    if len(args.pairs) % 2 != 0:
+        raise SystemExit("give KEY COLOR pairs, e.g. save mine W red A red")
     keys = {args.pairs[i]: args.pairs[i + 1]
             for i in range(0, len(args.pairs), 2)}
+    for name, color in keys.items():
+        _resolve(name)                 # fail fast on unknown keys
+        colors.parse_color(color)      # and on unparseable colors
     profile = {"type": "static", "brightness": args.brightness,
                "base": args.base, "keys": keys}
     os.makedirs(PROFILE_DIR, exist_ok=True)
@@ -204,6 +209,8 @@ def cmd_audio_sources(args):
 
 # ------------------------------------------------------- probe / calibrate ----
 def cmd_slot(args):
+    if not 0 <= args.index < layout.NUM_SLOTS:
+        raise SystemExit(f"slot must be between 0 and {layout.NUM_SLOTS - 1}")
     with _direct_device() as kb:
         kb.send({args.index: colors.parse_color(args.color)})
     print(f"Slot {args.index} = {args.color} (label: {layout.LABELS[args.index]}).")
@@ -465,7 +472,7 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
         return args.func(args) or 0
-    except DeviceError as e:
+    except (DeviceError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
     except SystemExit:

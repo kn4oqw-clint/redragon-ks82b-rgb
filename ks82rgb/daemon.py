@@ -111,6 +111,10 @@ class Daemon:
                 except DeviceError:
                     self._connected = False   # replug / lost; reconnect next loop
                     last_frame = None
+                    try:
+                        self.kb.close()       # don't leak the hidraw fd
+                    except Exception:
+                        pass
                     continue
 
             next_tick += interval
